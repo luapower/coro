@@ -9,7 +9,10 @@ v1.0 | LuaJIT 2, Lua 5.1, Lua 5.2
 
 Symmetric coroutines are coroutines that allow you to transfer control to a specific coroutine, unlike Lua's standard coroutines which only allow you to suspend execution to the calling coroutine.
 
-This is the implementation from the paper [Coroutines in Lua](http://www.inf.puc-rio.br/~roberto/docs/corosblp.pdf). Changes from the paper:
+This is the implementation from the paper [Coroutines in Lua](http://www.inf.puc-rio.br/~roberto/docs/corosblp.pdf).
+
+Changes from the paper:
+
  * threads created with `coro.create()` finish into the creator thread not main thread, unless otherwise specified.
  * added `coro.wrap()` similar to `coroutine.wrap()`.
 
@@ -33,11 +36,13 @@ The coroutine representing the main thread (the thread that calls `coro.transfer
 
 Similar to `coroutine.wrap` for symmetric coroutines. Useful for creating iterators in an environment of symmetric coroutines in which simply calling `coroutine.yield` is not an option:
 
-	local parent = coro.current
-	local iter = coro.wrap(function()
-		local function yield(val)
-			coro.transfer(parent, val)
-		end
-		...
-		yield(val)
-	end)
+~~~{.lua}
+local parent = coro.current
+local iter = coro.wrap(function()
+	local function yield(val)
+		coro.transfer(parent, val)
+	end
+	...
+	yield(val)
+end)
+~~~
