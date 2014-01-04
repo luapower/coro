@@ -1,6 +1,7 @@
 ---
-project: coro
-tagline: Lua symmetric coroutines
+project:     coro
+tagline:     Lua symmetric coroutines
+category:    Language
 ---
 
 v1.0 | LuaJIT 2, Lua 5.1, Lua 5.2
