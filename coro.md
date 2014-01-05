@@ -4,8 +4,6 @@ tagline:     Lua symmetric coroutines
 category:    Language
 ---
 
-v1.0 | LuaJIT 2, Lua 5.1, Lua 5.2
-
 ## `local coro = require'coro'`
 
 Symmetric coroutines are coroutines that allow you to transfer control to a specific coroutine, unlike Lua's standard coroutines which only allow you to suspend execution to the calling coroutine.
