@@ -1,7 +1,6 @@
 ---
 project:     coro
 tagline:     Lua symmetric coroutines
-category:    Language
 ---
 
 ## `local coro = require'coro'`
