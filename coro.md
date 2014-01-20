@@ -1,6 +1,6 @@
 ---
-project:     coro
-tagline:     Lua symmetric coroutines
+project: coro
+tagline: symmetric coroutines
 ---
 
 ## `local coro = require'coro'`
