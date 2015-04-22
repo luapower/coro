@@ -1,7 +1,11 @@
---symmetric coroutine implementation from http://www.inf.puc-rio.br/~roberto/docs/corosblp.pdf
---changes from the paper:
--- threads created with coro.create() finish into the creator thread not main thread, unless otherwise specified.
--- added coro.wrap() similar to coroutine.wrap().
+
+--symmetric coroutine implementation from
+--    http://www.inf.puc-rio.br/~roberto/docs/corosblp.pdf
+--
+-- changes from the paper:
+--   * threads created with coro.create() finish into the creator thread
+--   not in main thread, unless otherwise specified.
+--   * added coro.wrap() similar to coroutine.wrap().
 
 local coro = {}
 coro.main = function() end
