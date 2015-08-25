@@ -1,5 +1,4 @@
 ---
-project: coro
 tagline: symmetric coroutines
 ---
 
