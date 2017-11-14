@@ -26,12 +26,12 @@ Create a symmetric coroutine, optionally specifying the thread which the
 coroutine should transfer control to when it finishes execution (defaults to
 `coro.current`.
 
-### `coro.transfer(coro_thread[, send_val]) -> recv_val`
+### `coro.transfer(coro_thread[, ...]) -> ...`
 
 Transfer control to a symmetric coroutine, suspending execution. The target
 coroutine either hasn't started yet, or it is itself suspended in a call to
-`coro.transfer()`, in which case it resumes and receives `send_val` as the
-return value of the call. Likewise, the coroutine which transfers execution
+`coro.transfer()`, in which case it resumes and receives the values as the
+return values of the call. Likewise, the coroutine which transfers execution
 will stay suspended until `coro.transfer()` is called again with it as target.
 
 ### `coro.current -> coro_thread`
@@ -51,11 +51,11 @@ iterators in an environment of symmetric coroutines in which simply calling
 
 ~~~{.lua}
 local parent = coro.current
-local iter = coro.wrap(function()
-	local function yield(val)
-		coro.transfer(parent, val)
+local iter = coro.wrap(function(...)
+	local function yield(...)
+		coro.transfer(parent, ...)
 	end
 	...
-	yield(val)
+	yield(...)
 end)
 ~~~
