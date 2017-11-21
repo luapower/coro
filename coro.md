@@ -25,7 +25,6 @@ with some important modifications:
  module such that it can replace it entirely, which is what enables arbitrary
  transfering of control from inside standard-behaving coroutines.
 
-
 ## API
 
 ### `coro.create(f) -> thread`
@@ -75,3 +74,4 @@ Behaves like standard `coroutine.current()`.
 
 Behaves like standard `coroutine.status()`.
 
+__NOTE:__ In this implementation `type(thread) == 'thread'`.
