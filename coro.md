@@ -62,9 +62,10 @@ from external modules to work with scheduled I/O functions which call
 Behaves like standard `coroutine.yield()`. A coroutine that was transferred
 into via `coro.transfer()` cannot yield (an error is raised if attempted).
 
-### `coro.resume(...) -> ok, ...`
+### `coro.resume(...) -> true, ... | false, err, tracekback`
 
-Behaves like standard `coroutine.resume()`.
+Behaves like standard `coroutine.resume()`. Adds a traceback as the third
+return value in case of error.
 
 ### `coro.current() -> thread | nil`
 
