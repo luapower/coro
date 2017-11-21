@@ -9,7 +9,7 @@ coroutine, unlike Lua's standard coroutines which can only yield back to the
 thread which resumed them (also called asymmetric coroutines or generators).
 
 Rationale: writing coroutine-based generators over scheduled async callbacks
-(like the `read() and `write()` methods of [socketloop] sockets) in Lua is
+(like the `read()` and `write()` methods of [socketloop] sockets) in Lua is
 by default not possible because the callbacks would yield to the generator
 coroutine instead of yielding to their scheduler. This can be solved using
 a coroutine scheduler that allows transferring control both to the parent
