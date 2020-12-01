@@ -4,16 +4,19 @@ tagline: symmetric coroutines
 
 ## `local coro = require'coro'`
 
-Symmetric coroutines are coroutines that can transfer control to any other
-coroutine, unlike Lua's standard coroutines which can only yield back to
-their parent coroutine (and are called asymmetric coroutines or generators).
+Symmetric coroutines are coroutines that can transfer control freely between
+themselves, unlike Lua's standard coroutines which can only yield back to
+the coroutine that resumed them (and are called asymmetric coroutines
+or generators because of that reason).
 
-Rationale: writing coroutine-based generators over scheduled async callbacks
-(like the `read()` and `write()` methods of [socketloop] sockets) in Lua is
-by default not possible because the callbacks would yield to the generator
+## Rationale
+
+Using coroutine-based async I/O methods (like the `read()` and `write()`
+methods of async socket libraries) inside user-created standard coroutines
+is by default not possible because the I/O methods would yield to the parent
 coroutine instead of yielding to their scheduler. This can be solved using
-a coroutine scheduler that allows transferring control both to the parent
-coroutine as well as transferring control to a specific coroutine.
+a coroutine scheduler that allows transferring control not only to the parent
+coroutine but to any specified coroutine.
 
 This implementation is loosely based on the one from the paper
 [Coroutines in Lua](http://www.inf.puc-rio.br/~roberto/docs/corosblp.pdf)
@@ -24,6 +27,7 @@ with some important modifications:
  * the coro module reimplements all the methods of the built-in coroutine
  module such that it can replace it entirely, which is what enables arbitrary
  transfering of control from inside standard-behaving coroutines.
+ * `coro.safewrap()` is added which allows cross-yielding.
 
 ## API
 
@@ -76,6 +80,22 @@ Behaves like standard `coroutine.current()`.
 Behaves like standard `coroutine.status()`.
 
 __NOTE:__ In this implementation `type(thread) == 'thread'`.
+
+### `coro.wrap(f) -> wrapper`
+
+Behaves like standard `coroutine.wrap()`.
+
+### `coro.safewrap(f) -> wrapper`
+
+Behaves like `coroutine.wrap()` except that the wrapped function receives
+a custom `yield()` function as its first argument which always yields back
+to the calling thread even when called from a different thread. This allows
+cross-yielding i.e. yielding past multiple levels of nested coroutines
+which enables unrestricted inversion-of-control.
+
+So with this you can turn any callback-based library into a sequential
+library, even if said library uses coroutines itself and wouldn't normally
+allow the callbacks to yield.
 
 ## Why it works
 

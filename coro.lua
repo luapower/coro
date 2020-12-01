@@ -117,6 +117,28 @@ function coro.wrap(f)
 	end
 end
 
+function coro.safewrap(f)
+	local calling_thread, yielding_thread
+	local function yield(...)
+		yielding_thread = current
+		return coro.transfer(calling_thread, ...)
+	end
+	local function finish(...)
+		yielding_thread = nil
+		return coro.transfer(calling_thread, ...)
+	end
+	local function wrapper(...)
+		return finish(f(yield, ...))
+	end
+	local thread = coro.create(wrapper)
+	yielding_thread = thread
+	return function(...)
+		calling_thread = current
+		assert(yielding_thread, 'cannot resume dead coroutine')
+		return coro.transfer(yielding_thread, ...)
+	end
+end
+
 function coro.install()
 	_G.coroutine = coro
 	return coroutine

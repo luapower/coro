@@ -340,3 +340,24 @@ test('transfer() chains and coroutine.running()', function()
 	for i=1,1000 do assert(t[i] == i * i) end
 end)
 
+test('safewrap() cross-yielding', function()
+
+	local f1 = coroutine.safewrap(function(yield1, a)
+			assert(a == 1)
+			local f2 = coroutine.safewrap(function(yield2, a)
+				assert(a == 11)
+				assert(yield1(1) == 2)
+				assert(yield2(22) == 33)
+				return 44
+			end)
+			assert(f2(11) == 22)
+			assert(f2(33) == 44)
+			assert(yield1(3) == 4)
+			return 5
+	end)
+	assert(f1(1) == 1)
+	assert(f1(2) == 3)
+	assert(f1(4) == 5)
+	assert(select(2, pcall(f1)):find('dead'))
+
+end)
