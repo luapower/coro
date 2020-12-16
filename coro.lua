@@ -25,9 +25,11 @@ local function caller_thread(thread)
 	return caller ~= true and caller or nil --true means main thread
 end
 
-local function unprotect(ok, ...)
+local function unprotect(thread, ok, ...)
 	if not ok then
-		error(..., 2)
+		local s = debug.traceback(thread, (...))
+		s = s:gsub('stack traceback:', tostring(thread)..' stack traceback:')
+		error(s, 2)
 	end
 	return ...
 end
@@ -90,7 +92,7 @@ local function transfer(thread, ...)
 end
 
 function coro.transfer(thread, ...)
-	return unprotect(transfer(thread, ...))
+	return unprotect(thread, transfer(thread, ...))
 end
 
 local function remove_caller(thread, ...)
@@ -113,7 +115,7 @@ end
 function coro.wrap(f)
 	local thread = coro.create(f)
 	return function(...)
-		return unprotect(coro.resume(thread, ...))
+		return unprotect(thread, coro.resume(thread, ...))
 	end
 end
 
