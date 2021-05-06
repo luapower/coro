@@ -160,11 +160,13 @@ do
 	function coro.name(thread, name)
 		thread = thread or current or 'main'
 		if name == false then
-			names[thread] = nil
-			local i = glue.indexof(thread, list)
-			table.remove(i)
-			for i = 1, #list do
-				offsets[list[i]] = i-1
+			if names[thread] then
+				names[thread] = nil
+				local i = glue.indexof(thread, list)
+				table.remove(i)
+				for i = 1, #list do
+					offsets[list[i]] = i-1
+				end
 			end
 		elseif name then
 			assert(not names[thread])
