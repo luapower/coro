@@ -92,6 +92,9 @@ local function transfer(thread, ...)
 end
 
 function coro.transfer(thread, ...)
+	--uncomment to debug transfers:
+	--coro.print('>', select('#', ...))
+	--print(coro.name(current), '>', coro.name(thread))
 	return unprotect(thread, transfer(thread, ...))
 end
 
@@ -127,6 +130,7 @@ function coro.safewrap(f)
 	end
 	local function finish(...)
 		yielding_thread = nil
+		coro.name(nil, false)
 		return coro.transfer(calling_thread, ...)
 	end
 	local function wrapper(...)
@@ -144,6 +148,48 @@ end
 function coro.install()
 	_G.coroutine = coro
 	return coroutine
+end
+
+--debugging ------------------------------------------------------------------
+
+do
+	local names = {} --{thread->name}
+	local list = {} --{thread1,...}
+	local offsets = {} --{thread->offset}
+
+	function coro.name(thread, name)
+		thread = thread or current or 'main'
+		if name == false then
+			names[thread] = nil
+			local i = glue.indexof(thread, list)
+			table.remove(i)
+			for i = 1, #list do
+				offsets[list[i]] = i-1
+			end
+		elseif name then
+			assert(not names[thread])
+			names[thread] = assert(name)
+			table.insert(list, thread)
+			offsets[thread] = #list-1
+		else
+			return names[thread]
+		end
+	end
+
+	function coro.print(...)
+		local thread = current or 'main'
+		local name = coro.name(thread)
+		if not name then
+			name = 'T'..#list
+			coro.name(thread, name)
+		end
+		local o = offsets[thread]
+		local s = string.rep(' ', o * 16)
+		print(s..'['..name..']')
+		print(s..table.concat(glue.map({...}, tostring), ' '))
+	end
+
+	coro.name(nil, 'main')
 end
 
 return coro
