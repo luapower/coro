@@ -130,7 +130,6 @@ function coro.safewrap(f)
 	end
 	local function finish(...)
 		yielding_thread = nil
-		coro.name(nil, false)
 		return coro.transfer(calling_thread, ...)
 	end
 	local function wrapper(...)
@@ -153,27 +152,27 @@ end
 --debugging ------------------------------------------------------------------
 
 do
-	local names = {} --{thread->name}
-	local list = {} --{thread1,...}
+	local names   = {} --{thread->name}
+	local list    = {} --{thread1,...}
 	local offsets = {} --{thread->offset}
 
 	function coro.name(thread, name)
 		thread = thread or current or 'main'
-		if name == false then
+		if name == false then --remove
 			if names[thread] then
 				names[thread] = nil
 				local i = glue.indexof(thread, list)
-				table.remove(i)
+				table.remove(list, i)
 				for i = 1, #list do
 					offsets[list[i]] = i-1
 				end
 			end
-		elseif name then
+		elseif name then --set
 			assert(not names[thread])
 			names[thread] = assert(name)
 			table.insert(list, thread)
 			offsets[thread] = #list-1
-		else
+		else --get
 			return names[thread]
 		end
 	end
@@ -181,8 +180,8 @@ do
 	function coro.print(...)
 		local thread = current or 'main'
 		local name = coro.name(thread)
-		if not name then
-			name = 'T'..#list
+		if not name then --assign a default name on first call to print()
+			name = 'T'..
 			coro.name(thread, name)
 		end
 		local o = offsets[thread]
@@ -191,7 +190,7 @@ do
 		print(s..table.concat(glue.map({...}, tostring), ' '))
 	end
 
-	coro.name(nil, 'main')
+	coro.name(current, 'main')
 end
 
 return coro
