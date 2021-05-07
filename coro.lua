@@ -12,16 +12,15 @@ local callers = setmetatable({}, {__mode = 'k'}) --{thread -> caller_thread}
 local current --nil means main thread
 
 local function assert_thread(thread, level)
-	if type(thread) == 'thread' then
-		return thread
+	if thread ~= nil and type(thread) ~= 'thread' then
+		local err = string.format('coroutine expected but %s given', type(thread))
+		error(err, level)
 	end
-	local err = string.format('coroutine expected but %s given', type(thread))
-	error(err, level)
+	return thread
 end
 
 --the caller is the thread that called resume() on this thread, if any.
-local function caller_thread(thread)
-	local caller = callers[thread]
+local function caller_thread(caller)
 	return caller ~= true and caller or nil --true means main thread
 end
 
@@ -34,13 +33,14 @@ local function unprotect(thread, ok, ...)
 	return ...
 end
 
---the coroutine ends by transferring control to the caller thread. coroutines
---that are transfer()ed into must give up control explicitly before ending.
+--the coroutine ends by transferring control to the caller (or finish) thread.
 local function finish(thread, ...)
-	if not callers[thread] then
+	local caller = callers[thread]
+	if not caller then
 		error('coroutine ended without transferring control', 3)
 	end
-	return caller_thread(thread), true, ...
+	callers[thread] = nil
+	return caller_thread(caller), true, ...
 end
 function coro.create(f)
 	local thread
@@ -64,7 +64,7 @@ local function check(thread, ok, ...)
 	if not ok then
 		--the coroutine finished with an error. pass the error back to the
 		--caller thread, or to the main thread if there's no caller thread.
-		return go(caller_thread(thread), ok, ..., debug.traceback()) --tail call
+		return go(caller_thread(callers[thread]), ok, ..., debug.traceback()) --tail call
 	end
 	return go(...) --tail call: loop over the next transfer request.
 end
@@ -79,9 +79,7 @@ function go(thread, ok, ...)
 end
 
 local function transfer(thread, ...)
-	if thread ~= nil then
-		assert_thread(thread, 3)
-	end
+	assert_thread(thread, 3)
 	if current then
 		--we're inside a coroutine: signal the transfer request by yielding.
 		return coroutine.yield(thread, true, ...)
@@ -98,6 +96,13 @@ function coro.transfer(thread, ...)
 	return unprotect(thread, transfer(thread, ...))
 end
 
+function coro.finish(thread, ...)
+	assert(not callers[current], 'resumed thread must finish in caller thread')
+	assert_thread(thread, 2)
+	callers[current] = thread or true
+	return ...
+end
+
 local function remove_caller(thread, ...)
 	callers[thread] = nil
 	return ...
@@ -111,8 +116,9 @@ end
 
 function coro.yield(...)
 	assert(current, 'yielding from the main thread')
-	assert(callers[current], 'yielding from a non-resumed thread')
-	return coro.transfer(caller_thread(current), ...)
+	local caller = callers[current]
+	assert(caller, 'yielding from a non-resumed thread')
+	return coro.transfer(caller_thread(caller), ...)
 end
 
 function coro.wrap(f)
@@ -130,7 +136,7 @@ function coro.safewrap(f)
 	end
 	local function finish(...)
 		yielding_thread = nil
-		return coro.transfer(calling_thread, ...)
+		return coro.finish(calling_thread, ...)
 	end
 	local function wrapper(...)
 		return finish(f(yield, ...))

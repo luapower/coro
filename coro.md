@@ -52,7 +52,17 @@ into the main thread.
 
 A coroutine which was transferred into (as opposed to one which was
 resumed into) must finish by transferring control to another coroutine
-(or to the main thread), otherwise an error is raised.
+(or to the main thread) with `coro.finish()`, otherwise an error is raised.
+
+### `coro.finish(thread|nil[, ...]) -> ...`
+
+Finish the current coroutine and transfer control to another thread.
+Using this function inside a coroutine that was resumed into (as opposed
+to transferred into) raises an error. Calling it twice also raises an error.
+
+Always use `return coro.finish(thread, ...)` to finish a coroutine instead
+of `coro.transfer()` because `coro.transfer()` only suspends the coroutine,
+it doesn't actually end it, which prevents it from being garbage-collected.
 
 ### `coro.install() -> old_coroutine_module`
 
@@ -93,9 +103,9 @@ to the calling thread even when called from a different thread. This allows
 cross-yielding i.e. yielding past multiple levels of nested coroutines
 which enables unrestricted inversion-of-control.
 
-So with this you can turn any callback-based library into a sequential
-library, even if said library uses coroutines itself and wouldn't normally
-allow the callbacks to yield.
+With this you can turn any callback-based library into a sequential library,
+even if said library uses coroutines itself and wouldn't normally allow
+the callbacks to yield.
 
 ## Why it works
 
