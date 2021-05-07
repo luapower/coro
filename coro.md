@@ -52,17 +52,7 @@ into the main thread.
 
 A coroutine which was transferred into (as opposed to one which was
 resumed into) must finish by transferring control to another coroutine
-(or to the main thread) with `coro.finish()`, otherwise an error is raised.
-
-### `coro.finish(thread|nil[, ...]) -> ...`
-
-Finish the current coroutine and transfer control to another thread.
-Using this function inside a coroutine that was resumed into (as opposed
-to transferred into) raises an error. Calling it twice also raises an error.
-
-Always use `return coro.finish(thread, ...)` to finish a coroutine instead
-of `coro.transfer()` because `coro.transfer()` only suspends the coroutine,
-it doesn't actually end it, which prevents it from being garbage-collected.
+(or to the main thread) otherwise an error is raised.
 
 ### `coro.install() -> old_coroutine_module`
 

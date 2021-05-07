@@ -96,13 +96,6 @@ function coro.transfer(thread, ...)
 	return unprotect(thread, transfer(thread, ...))
 end
 
-function coro.finish(thread, ...)
-	assert(not callers[current], 'resumed thread must finish in caller thread')
-	assert_thread(thread, 2)
-	callers[current] = thread or true
-	return ...
-end
-
 local function remove_caller(thread, ...)
 	callers[thread] = nil
 	return ...
@@ -136,7 +129,7 @@ function coro.safewrap(f)
 	end
 	local function finish(...)
 		yielding_thread = nil
-		return coro.finish(calling_thread, ...)
+		return coro.transfer(calling_thread, ...)
 	end
 	local function wrapper(...)
 		return finish(f(yield, ...))

@@ -370,3 +370,19 @@ test('safewrap() cross-yielding', function()
 	assert(coroutine.transfer(thread, 'back') == 'over')
 
 end)
+
+test('suspended coroutines are garbage-collected', function()
+	local t = setmetatable({}, {__mode = 'k'})
+	local parent = coroutine.running()
+	local co = coroutine.create(function(...)
+		coroutine.transfer(parent, ...)
+		print'unreachable code'
+	end)
+	t[co] = true
+	collectgarbage(); assert(next(t))
+	assert(coroutine.transfer(co, 'abc') == 'abc')
+	collectgarbage(); assert(next(t))
+	co = nil
+	collectgarbage(); assert(not next(t))
+end)
+
