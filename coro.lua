@@ -9,19 +9,16 @@ local coroutine = coroutine
 
 local coro = {}
 local callers = setmetatable({}, {__mode = 'k'}) --{thread -> caller_thread}
-local current --nil means main thread
+local main, is_main = coroutine.running()
+assert(is_main, 'coro must be loaded from the main thread')
+local current = main
 
 local function assert_thread(thread, level)
-	if thread ~= nil and type(thread) ~= 'thread' then
+	if type(thread) ~= 'thread' then
 		local err = string.format('coroutine expected but %s given', type(thread))
 		error(err, level)
 	end
 	return thread
-end
-
---the caller is the thread that called resume() on this thread, if any.
-local function caller_thread(caller)
-	return caller ~= true and caller or nil --true means main thread
 end
 
 local function unprotect(thread, ok, ...)
@@ -40,7 +37,7 @@ local function finish(thread, ...)
 		error('coroutine ended without transferring control', 3)
 	end
 	callers[thread] = nil
-	return caller_thread(caller), true, ...
+	return caller, true, ...
 end
 function coro.create(f)
 	local thread
@@ -51,7 +48,7 @@ function coro.create(f)
 end
 
 function coro.running()
-	return current
+	return current, current == main
 end
 
 function coro.status(thread)
@@ -64,13 +61,13 @@ local function check(thread, ok, ...)
 	if not ok then
 		--the coroutine finished with an error. pass the error back to the
 		--caller thread, or to the main thread if there's no caller thread.
-		return go(caller_thread(callers[thread]), ok, ..., debug.traceback()) --tail call
+		return go(callers[thread] or main, ok, ..., debug.traceback()) --tail call
 	end
 	return go(...) --tail call: loop over the next transfer request.
 end
 function go(thread, ok, ...)
 	current = thread
-	if not thread then
+	if thread == main then
 		--transfer to the main thread: stop the scheduler.
 		return ok, ...
 	end
@@ -80,7 +77,7 @@ end
 
 local function transfer(thread, ...)
 	assert_thread(thread, 3)
-	if current then
+	if current ~= main then
 		--we're inside a coroutine: signal the transfer request by yielding.
 		return coroutine.yield(thread, true, ...)
 	else
@@ -102,16 +99,16 @@ local function remove_caller(thread, ...)
 end
 function coro.resume(thread, ...)
 	assert(thread ~= current, 'trying to resume the running thread')
-	assert(thread, 'trying to resume the main thread')
-	callers[thread] = current or true
+	assert(thread ~= main, 'trying to resume the main thread')
+	callers[thread] = current
 	return remove_caller(thread, transfer(thread, ...))
 end
 
 function coro.yield(...)
-	assert(current, 'yielding from the main thread')
+	assert(current ~= main, 'yielding from the main thread')
 	local caller = callers[current]
 	assert(caller, 'yielding from a non-resumed thread')
-	return coro.transfer(caller_thread(caller), ...)
+	return coro.transfer(caller, ...)
 end
 
 function coro.wrap(f)
@@ -136,6 +133,7 @@ function coro.safewrap(f)
 	end
 	local thread = coro.create(wrapper)
 	yielding_thread = thread
+	local create_thread = current
 	return function(...)
 		calling_thread = current
 		assert(yielding_thread, 'cannot resume dead coroutine')
@@ -156,7 +154,7 @@ do
 	local offsets = {} --{thread->offset}
 
 	function coro.name(thread, name)
-		thread = thread or current or 'main'
+		thread = thread or current
 		if name == false then --remove
 			if names[thread] then
 				names[thread] = nil
@@ -171,17 +169,17 @@ do
 			names[thread] = assert(name)
 			table.insert(list, thread)
 			offsets[thread] = #list-1
+			return name
 		else --get
 			return names[thread]
 		end
 	end
 
 	function coro.print(...)
-		local thread = current or 'main'
+		local thread = current
 		local name = coro.name(thread)
 		if not name then --assign a default name on first call to print()
-			name = 'T'..
-			coro.name(thread, name)
+			name = coro.name(thread, tostring(thread):gsub('thread: ', ''))
 		end
 		local o = offsets[thread]
 		local s = string.rep(' ', o * 16)
@@ -189,7 +187,7 @@ do
 		print(s..table.concat(glue.map({...}, tostring), ' '))
 	end
 
-	coro.name(current, 'main')
+	coro.name(main, 'main')
 end
 
 return coro

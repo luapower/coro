@@ -36,16 +36,15 @@ with some important modifications:
 Create a coroutine which can be started with either `coro.resume()` or
 with `coro.transfer()`.
 
-### `coro.transfer(thread|nil[, ...]) -> ...`
+### `coro.transfer(thread[, ...]) -> ...`
 
-Transfer control (and optionally any values) to a coroutine (or to the main
-thread if nil is passed for thread), suspending execution. The target
-coroutine either hasn't started yet, in which case it is started and it
-receives the values as the arguments of its main function, or it's suspended
-in a call to `coro.transfer()`, in which case it is resumed and receives the
-values as the return values of that call. Likewise, the coroutine which
-transfers execution will stay suspended until `coro.transfer()` is called
-again with it as target.
+Transfer control (and optionally any values) to a coroutine, suspending
+execution. The target coroutine either hasn't started yet, in which case it
+is started and it receives the values as the arguments of its main function,
+or it's suspended in a call to `coro.transfer()`, in which case it is resumed
+and receives the values as the return values of that call. Likewise, the
+coroutine which transfers execution will stay suspended until `coro.transfer()`
+is called again with it as target.
 
 Errors raised inside a coroutine which was transferrred into are re-raised
 into the main thread.
@@ -71,9 +70,9 @@ into via `coro.transfer()` cannot yield (an error is raised if attempted).
 Behaves like standard `coroutine.resume()`. Adds a traceback as the third
 return value in case of error.
 
-### `coro.current() -> thread | nil`
+### `coro.current() -> thread, is_main`
 
-Behaves like standard `coroutine.current()`.
+Behaves like standard `coroutine.current()` (from Lua 5.2 / LuaJIT 2).
 
 ### `coro.status(thread) -> status`
 
