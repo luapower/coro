@@ -3,6 +3,8 @@
 --    http://www.inf.puc-rio.br/~roberto/docs/corosblp.pdf
 --Written by Cosmin Apreutesei. Public Domain.
 
+--Tip: don't be deceived by the small size of this code.
+
 if not ... then require'coro_test'; return end
 
 local coroutine = coroutine
@@ -44,6 +46,8 @@ function coro.create(f)
 	thread = coroutine.create(function(ok, ...)
 		return finish(thread, f(...))
 	end)
+	--uncomment to debug transfers (require'$log' first):
+	--pr('C', thread, 'by', current)
 	return thread
 end
 
@@ -77,6 +81,7 @@ end
 
 local function transfer(thread, ...)
 	assert_thread(thread, 3)
+	assert(thread ~= current, 'trying to transfer to the running thread')
 	if current ~= main then
 		--we're inside a coroutine: signal the transfer request by yielding.
 		return coroutine.yield(thread, true, ...)
@@ -87,9 +92,8 @@ local function transfer(thread, ...)
 end
 
 function coro.transfer(thread, ...)
-	--uncomment to debug transfers:
-	--coro.print('>', select('#', ...))
-	--dbg('transfer', current, '>', thread)
+	--uncomment to debug transfers (require'$log' first):
+	--pr(current, '>', thread, ...)
 	return unprotect(thread, transfer(thread, ...))
 end
 
@@ -138,7 +142,7 @@ function coro.safewrap(f)
 		calling_thread = current
 		assert(yielding_thread, 'cannot resume dead coroutine')
 		return coro.transfer(yielding_thread, ...)
-	end
+	end, thread
 end
 
 function coro.install()
