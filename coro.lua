@@ -83,7 +83,7 @@ function go(thread, ok, ...)
 	return check(thread, resume(thread, ok, ...)) --tail call
 end
 
-local function transfer(thread, ...)
+local function ptransfer(thread, ...)
 	assert_thread(thread, 3)
 	assert(thread ~= current, 'trying to transfer to the running thread')
 	if current ~= main then
@@ -95,12 +95,12 @@ local function transfer(thread, ...)
 	end
 end
 
-coro.ptransfer = transfer
+coro.ptransfer = ptransfer
 
 function coro.transfer(thread, ...)
 	--uncomment to debug transfers (require'$log' first):
 	--pr(current, '>', thread, ...)
-	return unprotect(thread, transfer(thread, ...))
+	return unprotect(thread, ptransfer(thread, ...))
 end
 
 local function remove_caller(thread, ...)
@@ -111,7 +111,7 @@ function coro.resume(thread, ...)
 	assert(thread ~= current, 'trying to resume the running thread')
 	assert(thread ~= main, 'trying to resume the main thread')
 	callers[thread] = current
-	return remove_caller(thread, transfer(thread, ...))
+	return remove_caller(thread, ptransfer(thread, ...))
 end
 
 function coro.yield(...)
