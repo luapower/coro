@@ -95,6 +95,8 @@ local function transfer(thread, ...)
 	end
 end
 
+coro.ptransfer = transfer
+
 function coro.transfer(thread, ...)
 	--uncomment to debug transfers (require'$log' first):
 	--pr(current, '>', thread, ...)

@@ -53,6 +53,10 @@ A coroutine which was transferred into (as opposed to one which was
 resumed into) must finish by transferring control to another coroutine
 (or to the main thread) otherwise an error is raised.
 
+### `coro.ptransfer(thread[, ...]) -> ok, ... | nil, err`
+
+Protected transfer: a variant of `coro.transfer()` that doesn't raise.
+
 ### `coro.install() -> old_coroutine_module`
 
 Replace `_G.coroutine` with `coro` and return the old coroutine module.
