@@ -46,7 +46,7 @@ and receives the values as the return values of that call. Likewise, the
 coroutine which transfers execution will stay suspended until `coro.transfer()`
 is called again with it as target.
 
-Errors raised inside a coroutine which was transferrred into are re-raised
+Errors raised inside a coroutine which was transferred into are re-raised
 into the main thread.
 
 A coroutine which was transferred into (as opposed to one which was
@@ -69,7 +69,7 @@ from external modules to work with scheduled I/O functions which call
 Behaves like standard `coroutine.yield()`. A coroutine that was transferred
 into via `coro.transfer()` cannot yield (an error is raised if attempted).
 
-### `coro.resume(...) -> true, ... | false, err, tracekback`
+### `coro.resume(...) -> true, ... | false, err, traceback`
 
 Behaves like standard `coroutine.resume()`. Adds a traceback as the third
 return value in case of error.

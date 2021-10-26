@@ -191,6 +191,19 @@ function()
 	assert(err:find'!err!')
 end)
 
+test('error() in transferred thread is raised in the caller thread', function()
+	local ok, err, traceback = coroutine.resume(coroutine.create(function()
+		local thread = coroutine.create(function()
+			error'here'
+		end)
+		coroutine.transfer(thread)
+		assert(false) --not reaching here, transfer() doesn't change the caller.
+	end))
+	assert(not ok)
+	assert(err:find'here')
+	assert(traceback)
+end)
+
 test('trying to resume the current thread', function()
 	local ok, err = pcall(coroutine.resume, coroutine.running())
 	assert(ok == false)
@@ -386,4 +399,3 @@ test('suspended coroutines are garbage-collected', function()
 	co = nil
 	collectgarbage(); assert(not next(t))
 end)
-
