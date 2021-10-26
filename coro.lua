@@ -8,6 +8,10 @@
 if not ... then require'coro_test'; return end
 
 local coroutine = coroutine
+local resume = coroutine.resume
+local yield = coroutine.yield
+local cocreate = coroutine.create
+local costatus = coroutine.status
 
 local coro = {}
 local callers = setmetatable({}, {__mode = 'k'}) --{thread -> caller_thread}
@@ -43,7 +47,7 @@ local function finish(thread, ...)
 end
 function coro.create(f)
 	local thread
-	thread = coroutine.create(function(ok, ...)
+	thread = cocreate(function(ok, ...)
 		return finish(thread, f(...))
 	end)
 	--uncomment to debug transfers (require'$log' first):
@@ -57,7 +61,7 @@ end
 
 function coro.status(thread)
 	assert_thread(thread, 2)
-	return coroutine.status(thread)
+	return costatus(thread)
 end
 
 local go --fwd. decl.
@@ -76,7 +80,7 @@ function go(thread, ok, ...)
 		return ok, ...
 	end
 	--transfer to a coroutine: resume it and check the result.
-	return check(thread, coroutine.resume(thread, ok, ...)) --tail call
+	return check(thread, resume(thread, ok, ...)) --tail call
 end
 
 local function transfer(thread, ...)
@@ -84,7 +88,7 @@ local function transfer(thread, ...)
 	assert(thread ~= current, 'trying to transfer to the running thread')
 	if current ~= main then
 		--we're inside a coroutine: signal the transfer request by yielding.
-		return coroutine.yield(thread, true, ...)
+		return yield(thread, true, ...)
 	else
 		--we're in the main thread: start the scheduler.
 		return go(thread, true, ...) --tail call
