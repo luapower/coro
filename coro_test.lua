@@ -191,13 +191,13 @@ function()
 	assert(err:find'!err!')
 end)
 
-test('error() in transferred thread is raised in the caller thread', function()
-	local ok, err, traceback = coroutine.resume(coroutine.create(function()
+test('error() in transferred thread is raised in the main thread', function()
+	local ok, err, traceback = coroutine.ptransfer(coroutine.create(function()
 		local thread = coroutine.create(function()
 			error'here'
 		end)
 		coroutine.transfer(thread)
-		assert(false) --not reaching here, transfer() doesn't change the caller.
+		assert(false) --not reaching here, transfer() didn't set a caller.
 	end))
 	assert(not ok)
 	assert(err:find'here')
